@@ -1,13 +1,14 @@
 package pl.edu.mimuw.crawler.mw336071;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 
 public class Demo1 extends Crawler {
 	
 	private URI sourceURI;
 	
-	public Demo1 ( String url ) {
+	public void setSourceURI ( String url ) throws URISyntaxException {
 		sourceURI = new URI( url );
 	}
 	
@@ -36,13 +37,19 @@ public class Demo1 extends Crawler {
 
 	public static void main(String[] args) {
 
-		Demo1 mycrawler = new Demo1( args[0] );		
-		mycrawler.start( mycrawler.sourceURI );
+		Demo1 mycrawler = new Demo1(); 
 		
-		//foreach( )
-		//2 do: wypisanie
-		System.out.println( mycrawler.visitedDomains.toString() );
-		
+		try {
+			mycrawler.setSourceURI( args[0] );
+			mycrawler.start( mycrawler.sourceURI );
+			//foreach( )
+			//2 do: wypisanie
+			System.out.println( mycrawler.visitedDomains.toString() );
+		} catch (URISyntaxException e) {
+			mycrawler.log( "Niepoprawna sciezka inicjujujaca.");
+		} catch( ArrayIndexOutOfBoundsException e ) {
+			System.out.println( "Nie podano adresu domeny zrodlowej.");
+		}
 	}
 
 }

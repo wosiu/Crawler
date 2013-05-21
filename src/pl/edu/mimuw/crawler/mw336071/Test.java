@@ -1,16 +1,10 @@
-package pl.edu.mimuw.crawler.mw336071;
+//package pl.edu.mimuw.crawler.mw336071;
+//
+//import java.io.IOException;
+//import java.net.URISyntaxException;
 
-import org.jsoup.Jsoup;
-import org.jsoup.helper.Validate;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+//import org.jsoup.Jsoup;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 public class Test {
 
@@ -19,28 +13,32 @@ public class Test {
 	 * @throws IOException 
 	 * @throws URISyntaxException 
 	 */
-	public static void main(String[] args) throws IOException, URISyntaxException {
+	
+//	public void t(String url)
+//	{		
+//		try {
+//			Jsoup.connect( url ).get();
+//		} catch( java.lang.IllegalArgumentException e ){
+//			System.out.println( e.toString() );
+//		} catch (java.net.UnknownHostException e) {
+//			System.out.println( e.toString() );
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
+	
+	public static void main(String[] args) {
 		
-		File input = new File( "/home/m/studia/PO/eclipse/crawler/test/czytaj.html" );		
-		Document doc = Jsoup.parse(input, "UTF-8");
+		System.out.println( args[0] );
+		System.out.println( args[1] );
+		System.out.println( "test" );
 		
 		
-		//Document doc = Jsoup.connect( "http://www.mimuw.edu.pl/~kdr/test/1/" ).get() ;		
 		
+			//java.net.MalformedURLException
+		//java.lang.IllegalArgumentException
 		
-		Elements anchors = doc.select("a[href]");
-		System.out.println( anchors.size() );
-		
-        for (Element link : anchors) {
-        	//System.out.println(link.baseUri());
-        	//System.out.println( link.html() );
-        	//System.out.println(link.text());
-        	//System.out.println(link.toString());
-        	System.out.println( link.attr("href")  );
-        	//System.out.println( link.attr("abs:href")  );
-           System.out.println( "__________" );
-           //link = null;
-        }
 	}
 
 }
