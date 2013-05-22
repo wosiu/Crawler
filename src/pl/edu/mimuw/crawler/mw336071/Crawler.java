@@ -104,7 +104,7 @@ public class Crawler /*implements Runnable*/ {
 					//to nie powinno sie zdarzyc, chyba ze zmienie koncepcje na wielowątkową
 				}
 			} catch ( IllegalArgumentException | IOException e ) {
-				log( "Nie pobrano strony: " + uri.toString() + ": " + e.getMessage() );
+				log( "Nie przetworzono strony: " + uri.toString() + ": " + e.toString() );
 				return false;
 			}
 			
