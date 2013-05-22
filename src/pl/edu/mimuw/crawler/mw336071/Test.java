@@ -1,4 +1,15 @@
-//package pl.edu.mimuw.crawler.mw336071;
+package pl.edu.mimuw.crawler.mw336071;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Vector;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 //
 //import java.io.IOException;
 //import java.net.URISyntaxException;
@@ -8,37 +19,25 @@
 
 public class Test {
 
-	/**
-	 * @param args
-	 * @throws IOException 
-	 * @throws URISyntaxException 
-	 */
 	
-//	public void t(String url)
-//	{		
-//		try {
-//			Jsoup.connect( url ).get();
-//		} catch( java.lang.IllegalArgumentException e ){
-//			System.out.println( e.toString() );
-//		} catch (java.net.UnknownHostException e) {
-//			System.out.println( e.toString() );
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
-	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
-		System.out.println( args[0] );
-		System.out.println( args[1] );
-		System.out.println( "test" );
+		String uri = "http://www.mimuw.edu.pl/~kdr/test/1/";
+		Document doc = Jsoup.connect( uri ).get();
 		
-		
-		
-			//java.net.MalformedURLException
-		//java.lang.IllegalArgumentException
-		
+		Elements anchors = doc.select("a[href]");
+        Vector<URI>ret = new Vector<URI>();
+        
+		for ( Element link : anchors )
+		{
+            System.out.println( link.absUrl("href") );
+			
+			try {
+				ret.add( new URI( link.attr("href") ) );
+			} catch (URISyntaxException e) {
+				//TO DO: sprawdzic czy domyslne Uri().toString dziala pieknie
+			}
+		}
 	}
 
 }

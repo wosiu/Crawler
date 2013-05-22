@@ -26,6 +26,13 @@ public class Crawler /*implements Runnable*/ {
 			//ojciec przydatny, bo np mam w nim jego głębokość
 			this.parent = parent; 
 		}
+		
+		@Override
+		public String toString() {
+			return "["+uri.toString()+" from: " + 
+					( (parent!=null) ? parent.getUri().toString() : "null" )
+			+ "]\n";
+		}
 	}	
 	
 	private LinkedList < Task  > urisQueue = new LinkedList < Task > ();
@@ -35,12 +42,12 @@ public class Crawler /*implements Runnable*/ {
 	//Pytanie: co zrobic, zeby ta metoda byla widoczna do odpalenia dla dziedzi
 	//czacyc po niej, ale zebynie mozna bylo ja z override'owac ?
 	final public void start( URI uri ) {
-		
 		if ( !validUri( uri ) ) return;
 		urisQueue.addLast( new Task( uri, null ) );
 		
+		//TO DO: && (maxSitesNumber==-1 || maxSitesNumber>0 ) albo globalny booblean stop
 		while ( ! urisQueue.isEmpty() ) {
-			Task t = urisQueue.peekFirst();
+			Task t = urisQueue.pollFirst();
 			visitUri( t.uri, t.parent );
 		}		
 	}
@@ -53,24 +60,27 @@ public class Crawler /*implements Runnable*/ {
 		start( new URI( uri ) );
 	}
 
-
+	
 	private boolean visitUri( URI uri, Page parent ) {
+					
 		//instrukcje uzytkownika
 		preVisit( uri );
 		
-		int h = parent.getFirstDeph() + 1;
+		int h = (parent != null) ? ( parent.getFirstDeph() + 1 ) : 0;
 		if ( maxDeph != inf && h > maxDeph ) return false;
 		
 		//sprawdzamy czy ten uri juz nie wystapil - jak tak, nie przetwarzam
-		if( visitedUris.contains( uri ) ) return false;
-
+		if( visitedUris.contains( uri ) ) {return false;}
+		
 		//sprawdzamy czy ten uri podoba sie uzytkownikowi
-		if( !validUri( uri ) ) return false;
+		if( !validUri( uri ) ) {return false;}
+		
+		visitedUris.add( uri );
 		
 		Page page = new Page( uri );
 		page.setFirstDeph(h);
-		parent.outgoingUris.add( page );
 		
+		if( parent != null ) parent.outgoingUris.add( page );
 
 		// DOWNLOAD:
 		boolean fail = true;
@@ -94,7 +104,7 @@ public class Crawler /*implements Runnable*/ {
 					//to nie powinno sie zdarzyc, chyba ze zmienie koncepcje na wielowątkową
 				}
 			} catch ( IllegalArgumentException | IOException e ) {
-				log( "Nie pobrano strony: " + e.getMessage() );
+				log( "Nie pobrano strony: " + uri.toString() + ": " + e.getMessage() );
 				return false;
 			}
 			
@@ -108,7 +118,6 @@ public class Crawler /*implements Runnable*/ {
 		}
 		// END OF DOWNLOAD
 		
-		
 		Vector<URI> uris = getUris( page );
 		
 		for ( URI child : uris  )
@@ -119,7 +128,7 @@ public class Crawler /*implements Runnable*/ {
 		if ( !rememberText )
 		{
 			//page.setText( null );
-			page.getDoc().remove();
+			page.getDoc().empty();
 		}
 		
 		return true;
@@ -132,11 +141,13 @@ public class Crawler /*implements Runnable*/ {
 	{
 		Elements anchors = page.getDoc().select("a[href]");
         Vector<URI>ret = new Vector<URI>();
+        String uriString;
         
 		for ( Element link : anchors )
 		{
             try {
-				ret.add( new URI( link.attr("href") ) );
+            	uriString = link.absUrl("href"); //link.attr("href")
+				ret.add( new URI( uriString ) );
 			} catch (URISyntaxException e) {
 				//TO DO: sprawdzic czy domyslne Uri().toString dziala pieknie
 				log("Niepoprawny format URI na: " + page.getUri() + ":" + e.getMessage() );
@@ -159,7 +170,7 @@ public class Crawler /*implements Runnable*/ {
 	public void setMaxDeph( int h ) {
 		maxDeph = h;
 	}
-	public void setPagesNumber( int n ) {
+	public void setMaxSitesNumber( int n ) {
 		maxSitesNumber = n;
 	}
 	public void setMaxRetryNumber(int maxRetryNumber) {
@@ -205,9 +216,16 @@ public class Crawler /*implements Runnable*/ {
 	} 
 	
 	//sposób wypisywania błędów i komunikatow do urzytkownika:
-	public void log( String monit )
-	{
+	public void log( String monit ) {
 		//do reimplementacji w razie potrzeby
 		System.out.println( monit );
 	}
+	
+	public void deb( String monit ) {
+		log( monit );
+	}
+	public void deb( int number ) {
+		log( ""+number );
+	}
+	
 }

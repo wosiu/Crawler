@@ -12,7 +12,7 @@ public class Page {
 	private Document doc;
 	private int pid;
 	private int firstDeph; //glebokosc pierwszego wystapienia
-	public Vector <Page> outgoingUris; //wskaźniki na strony mające uri na this
+	public Vector <Page> outgoingUris = new Vector <Page>(); //wskaźniki na strony mające uri na this
 	
 	public Page( URI uri ) {
 		this.uri = uri;
