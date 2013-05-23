@@ -44,7 +44,7 @@ public class Demo1 extends Crawler {
 	
 	
 	/* komperator do  P O S O R T O W A N I A   W Y N I K U */
-	private class PairCompaterator implements Comparator< Entry<String, Integer> > {
+	private class PairComparator implements Comparator< Entry<String, Integer> > {
 	    @Override
 	    public int compare( Entry<String, Integer> o1, Entry<String, Integer> o2) {
 	    	if( o2.getValue() == o1.getValue() )
@@ -53,7 +53,7 @@ public class Demo1 extends Crawler {
 	        return o2.getValue().compareTo( o1.getValue() );
 	    }
 	}
-	private PairCompaterator entryCmp = new PairCompaterator();
+	private PairComparator entryCmp = new PairComparator();
 	
 
 	/* M A I N  */
