@@ -16,14 +16,18 @@ public class Crawler /*implements Runnable*/ {
 
 	/* S I L N I K */
 	
-	//jednostka polecenia do odwiedzenia
+	/**
+	 * Jednostka polecenia dla visitURL()
+	 * @author m
+	 * @param uri (URI) - adres do odwiedzenia
+	 * @param parent (Page) - ojcec
+	 */
 	private class Task {
 		URI uri;
 		Page parent;
 		
 		Task( URI uri, Page parent ) {
 			this.uri = uri;
-			//ojciec przydatny, bo np mam w nim jego głębokość
 			this.parent = parent; 
 		}
 		
@@ -39,8 +43,10 @@ public class Crawler /*implements Runnable*/ {
 	private HashSet < URI > visitedUris = new HashSet < URI > ();
 
 	
-	//Pytanie: co zrobic, zeby ta metoda byla widoczna do odpalenia dla dziedzi
-	//czacyc po niej, ale zebynie mozna bylo ja z override'owac ?
+	/**
+	 * Uruchamia crawlera
+	 * @param uri (URI) - adres źródłowy
+	 */
 	final public void start( URI uri ) {
 		if ( !validUri( uri ) ) return;
 		urisQueue.addLast( new Task( uri, null ) );
@@ -52,20 +58,31 @@ public class Crawler /*implements Runnable*/ {
 		}		
 	}
 	
-	//TO DO: public czy protected?
-	//rzucam, a nie przechwytuje, zeby uzytkownik mogl zdecydowac 
-	//moze na przyklad bedzie chcial ponownie wczytywac w takim przypadku 
-	//ze standardowego wejscia, kto go tam wie..
+	/**
+	 * Uruchamia crawlera
+	 * @param uri (String) - adres źródłowy
+	 * @throws URISyntaxException
+	 */
 	final public void start( String uri ) throws URISyntaxException {
 		start( new URI( uri ) );
 	}
 
 	
+	/**
+	 * Funkcja wywoływana dla każdej ścieżki w kolejce, analizująca nowe adresy.<br> 
+	 * Odpowiednio wywołuje i obsługuje: 
+	 * preVisit(), validUri(), download(), getUris(), postVisit()
+	 * @param uri - adres stronu do przejrzenia (URI)
+	 * @param parent - rodzic (Page)
+	 * @return <b>true</b> - jesli wywolano dla nowej ścieżki oraz przetworzenie strony o tej ścieżce przebiegło pomyślnie<br>
+	 * <b>false</b> - w p.p.
+	 */
 	private boolean visitUri( URI uri, Page parent ) {
 					
 		//instrukcje uzytkownika
 		preVisit( uri );
 		
+		//sprawdzam glebokosc, jesli ustawiona
 		int h = (parent != null) ? ( parent.getFirstDeph() + 1 ) : 0;
 		if ( maxDeph != inf && h > maxDeph ) return false;
 		
@@ -75,14 +92,16 @@ public class Crawler /*implements Runnable*/ {
 		//sprawdzamy czy ten uri podoba sie uzytkownikowi
 		if( !validUri( uri ) ) {return false;}
 		
+		//zaznaczam, że odwiedzona
 		visitedUris.add( uri );
 		
 		Page page = new Page( uri );
 		page.setFirstDeph(h);
 		
+		//dodaje obecną stronę jako syna strony źródłowej - rozwojowe
 		if( parent != null ) parent.outgoingUris.add( page );
 
-		// DOWNLOAD:
+		// obsluga DOWNLOADu:
 		boolean fail = true;
 		int downloadIterator = 0;
 				
@@ -118,25 +137,31 @@ public class Crawler /*implements Runnable*/ {
 		}
 		// END OF DOWNLOAD
 		
+		//pobieram wszystkie odnosniki z bierzącej strony i kolejkuję je
 		Vector<URI> uris = getUris( page );
 		
 		for ( URI child : uris  )
 			urisQueue.addLast( new Task(child, page) );
 		
+		//instrukcje uzytkownika
 		postVisit( page );
 		
 		if ( !rememberText )
 		{
-			//page.setText( null );
+			//zwalniam pamiec z treścią strony
 			page.getDoc().empty();
 		}
 		
 		return true;
 	}
 	
-	//znajduje wszystko pomiedzy znacznikami <a> 
-	//nie waliduje preferencjami uzytkownika
-	//sprawdza poprawnosc URI
+	/**
+	 * Znajduje wszystko pomiedzy znacznikami < a >. 
+	 * Nie waliduje preferencjami uzytkownika. Sprawdza poprawnosc URI.
+	 * 
+	 * @param page (Page) - strona do analizy
+	 * @return Vector < URI > - Vector wszystkich znalezionych odnosnikow na stronie
+	 */
 	private Vector<URI> getUris( Page page ) 
 	{
 		Elements anchors = page.getDoc().select("a[href]");
@@ -149,7 +174,6 @@ public class Crawler /*implements Runnable*/ {
             	uriString = link.absUrl("href"); //link.attr("href")
             	ret.add( new URI( uriString ) );
 			} catch (URISyntaxException e) {
-				//TO DO: sprawdzic czy domyslne Uri().toString dziala pieknie
 				log("Niepoprawny format URI na: " + page.getUri() + ":" + e.getMessage() );
 			}
 		}
@@ -161,28 +185,61 @@ public class Crawler /*implements Runnable*/ {
 	/* C O N F I G : */
 	public final int inf = -1;
 	private int maxDeph = inf;
-	@SuppressWarnings("unused")
 	private int maxSitesNumber = inf;
 	private int maxRetryNumber = 5; 
 	private int timeBetweenRetries = 1500; //w ms 
 	private boolean rememberText = false;	
 	
-	
+	/**
+	 * Ustawia maksymalną dopuszczalną głębokość crawlera. Domyślnie nieskończoność (-1).
+	 * @param h (int) - maksymalna głębokość
+	 */
 	public void setMaxDeph( int h ) {
 		maxDeph = h;
 	}
+	/**
+	 * Ustawia parametr rozwojowu - dopuszczalną maksymalną ilość stron do przetworzenia.
+	 * Nie wpływa na działanie programu, dopóki nie zostanie użyty w implementacji
+	 * preVisit(..) lub postVisit(..) przez użytkownika.
+	 * @param n - maksymalna ilość stron do przetworzenia (int) 
+	 */
 	public void setMaxSitesNumber( int n ) {
 		maxSitesNumber = n;
 	}
+	public int getMaxSitesNumber() {
+		return maxSitesNumber;
+	}
+	/**
+	 * Ustawia maksymalną ilość prób pobierania jednej strony w przypadku niepowodzenia.
+	 * Domyślna wartość (5)
+	 * @param maxRetryNumber - maksymalną ilość prób (int)
+	 */
 	public void setMaxRetryNumber(int maxRetryNumber) {
 		this.maxRetryNumber = maxRetryNumber;
 	}
+	/**
+	 * Ustawia czas pomiędzy próbami pobrania jednej strony w przypadku niepowodzenia.
+	 * Domyślna wartość (1500 ms)
+	 * @param timeBetweenRetries - czas pomiędzy próbami pobrania (int) - w ms
+	 */
 	public void setTimeBetweenRetries(int timeBetweenRetries) {
 		this.timeBetweenRetries = timeBetweenRetries;
 	}
+	/**
+	 * Ustawia, czy strona (Page) po pobraniu treści i przetworzeniu
+	 * ma zostać zachowana w pamięci w polu doc (Document) - true;<br>
+	 * czy zostać usunięta - false [domyślnie].<br> 
+	 * Ustawienie true pozwala na dostęp do treści w funkcji postVisit(Page page) 
+	 * za pomocą odwołania się do page.getDoc(). 
+	 * @param b - true-pamietaj / false-usun (boolean)
+	 */
 	public void setRememberText( boolean b ) {
 		rememberText = b;
 	}
+	/**
+	 * Zwraca stałą (-1) zdefiniowaną jako nieskońoczność w konfiguracji Crawlera.
+	 * @return -1 (int)
+	 */
 	public int infinity() {
 		return inf;
 	}
@@ -190,43 +247,80 @@ public class Crawler /*implements Runnable*/ {
 	
 	/* DO   R E I M P L E M E N T A C J I   W CELU ROZSZERZANIA: */
 	
+	/**
+	 * Domyslnie pobiera strony internetowe.<br>
+	 * Do opcjonalnej reimplementacji w klasie dziedziczącej w celu uzyskania innego 
+	 * sposobu pobierania.<br>
+	 * <br>
+	 * Pobiera strone o ścieżce: page.getURI().
+	 * Pobraną treść w formacie <a href="http://jsoup.org/apidocs/org/jsoup/nodes/Document.html">Document</a>
+	 * zapisuje w page używając page.setDoc( treść ).
+	 * 
+	 * @param page - strona do pobrania (Page)
+	 * @throws IllegalArgumentException
+	 * @throws UnknownHostException
+	 * @throws IOException
+	 */
 	public void download( Page page ) throws IllegalArgumentException, 
 										UnknownHostException, IOException 
 	{
-		//domyslnie pobiera strony internetowe
-		//do reimplementacji jeśli chcemy inny sposób pobierania:
 		String uri = page.getUri().toString();
 		page.setDoc( Jsoup.connect( uri ).get() );
 	}	
 	
-	//zwraca czy dodac dany URI do kolejki stron do pobrania
+	/**
+	 * Zwraca czy dodac dany URI do kolejki stron do pobrania.<br>
+	 * Domyślnie true - kolejkuje wszystkie.<br>
+	 * <br>
+	 * Do opcjonalnej reimplementacji w klasie dziedziczącej.
+	 * @param uri (URI) - ścieżka do walidacji
+	 * @return true-poprawny adres do przetworzenia / false - niepoprawny (boolean)
+	 */
 	public boolean validUri( URI uri ) {
-		//domyslnie kolejkuje wszystkie 
-		//do reimplementacji w podklasach
 		return true;
 	}
 
+	/**
+	 * Metoda wywoływana przed analizowaniem danej strony podczas chodzenia po
+	 * grafie stron (zostanie wywołana dla każdej strony w kolejce stron do przejrzenia). 
+	 * Domyślnie nie robi nic.<br>
+	 * Do opcjonalnej reimplementacji w podklasach w celu rozszerzenia funkcjonalności
+	 * Crawlera.
+	 * @param uri - adres strony (URI)
+	 */
 	public void preVisit( URI uri ) {
-		//odpalana przed analizowaniem strony
-		//do reimplementacji w podklasach	
 	}
 
-	public void postVisit( Page page ) {
-		//odpalana po analizowaniu strony
-		//do reimplementacji w podklasach			
+	/**
+	 * Metoda wywoływana po przeanalizowaniu danej strony 
+	 * (zostanie wywołana raz dla każdej przetworzonej poprawnie strony).
+	 * Domyślnie nie robi nic.<br>
+	 * Do opcjonalnej reimplementacji w podklasach w celu rozszerzenia funkcjonalności
+	 * Crawlera.<br><br>
+	 * <i>Przykład: odwołując się wewnątrz tej metody do page.getDoc() uzyskujemy 
+	 * jeszcze przechowywaną w pamięci treść strony, którą możemy wedle uznania 
+	 * zapisać do pliku, bądź przetworzyć w dowolny sposób.</i>
+	 * @param page - przetworzona strona (Page)
+	 */
+	public void postVisit( Page page ) {		
 	} 
 	
-	//sposób wypisywania błędów i komunikatow do urzytkownika:
+	/**
+	 * Sposób wypisywania błędów i komunikatow do urzytkownika. <br>
+	 * Domyślnie: standardowe wyjście (konsola). 
+	 * Do reimplementacji w klasie dziedziczącej w razie potrzeby
+	 * @param monit - wiadomosc do logu (String)
+	 */
 	public void log( String monit ) {
-		//do reimplementacji w razie potrzeby
 		System.out.println( monit );
 	}
 	
-	public void deb( String monit ) {
+	@SuppressWarnings("unused")
+	private void deb( String monit ) {
 		log( monit );
 	}
-	public void deb( int number ) {
+	@SuppressWarnings("unused")
+	private void deb( int number ) {
 		log( ""+number );
 	}
-	
 }

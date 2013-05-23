@@ -12,12 +12,9 @@ import java.util.Map.Entry;
 
 public class Demo1 extends Crawler {
 	
-	//odwiedzone strony zewnetrzne (key - url, value - liniczk):
+	//znalezione strony zewnetrzne i ilosc wystapien (key - url, value - liniczk):
 	private HashMap <String, Integer> visitedDomains = new HashMap <String, Integer >();
 	private URI sourceURI;
-	public void setSourceURI ( String url ) throws URISyntaxException {
-		sourceURI = new URI( url );
-	}
 	
 	/* R O Z S Z E R Z E N I E  C R A W L E R A */
 	@Override
@@ -28,9 +25,7 @@ public class Demo1 extends Crawler {
 	
 	@Override
 	public void preVisit( URI url ) {
-		
 		//sprawdzamy czy URL jest spoza domeny
-		
 		if ( url.getAuthority() != null && !validUri( url ) ) 
 		{
 			String key = url.getAuthority().toString();
@@ -42,7 +37,7 @@ public class Demo1 extends Crawler {
 		}
 	}
 	
-
+	
 	/* komperator do  P O S O R T O W A N I A   W Y N I K U */
 	private class PairCompaterator implements Comparator< Entry<String, Integer> > {
 	    @Override
@@ -53,7 +48,7 @@ public class Demo1 extends Crawler {
 	        return o2.getValue().compareTo( o1.getValue() );
 	    }
 	}
-	public PairCompaterator entryCmp = new PairCompaterator();
+	private PairCompaterator entryCmp = new PairCompaterator();
 	
 
 	/* M A I N  */
@@ -63,7 +58,7 @@ public class Demo1 extends Crawler {
 		
 		try {
 			/* inicjacja */
-			mycrawler.setSourceURI( args[0] );
+			mycrawler.sourceURI = new URI(args[0]);
 			mycrawler.start( mycrawler.sourceURI );
 			
 			/* posortowanie wyniku */
@@ -75,7 +70,7 @@ public class Demo1 extends Crawler {
 			//przepisuję mapę do listy
 			while (it.hasNext()) sorted.add( it.next() );
 		    
-			//a ja sortuje uwzgledniajac tresc zadania wlasnym comperatorem
+			//nastepnie sortuje wlasnym comperatorem uwzgledniajac tresc zadania
 			Collections.sort( sorted, mycrawler.entryCmp );
 			
 			/*wypisanie*/
