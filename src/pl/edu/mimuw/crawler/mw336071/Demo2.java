@@ -5,6 +5,11 @@ import java.io.IOException;
 import java.net.URI;
 import org.jsoup.Jsoup;
 
+/**
+ * @author Michał Woś mw336071 <br>
+ * projekt na laboratoria Programowanie Obiektowe <br>
+ * MIM Uniwersytet Warszawski maj 2013 <br>
+ */
 public class Demo2 extends Crawler {
 
 	//ilosc stron do zadannej glebokosci

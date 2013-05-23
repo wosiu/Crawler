@@ -10,6 +10,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+/**
+ * @author Michał Woś mw336071 <br>
+ * projekt na laboratoria Programowanie Obiektowe <br>
+ * MIM Uniwersytet Warszawski maj 2013 <br>
+ */
 public class Demo1 extends Crawler {
 	
 	//znalezione strony zewnetrzne i ilosc wystapien (key - url, value - liniczk):

@@ -12,6 +12,15 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+/**
+ * @author Michał Woś mw336071 <br>
+ * projekt na laboratoria Programowanie Obiektowe <br>
+ * MIM Uniwersytet Warszawski maj 2013 <br><br>
+ *
+ * poniższa klasa implementuje Crawlera odwiedzającego kolejne strony w drzewie BFS
+ * budowanym od zadanego adresu. Jego szczególne przypadki rozszerzeń znajdują sie 
+ * w klasach dziedziczących: Demo1, Demo2
+ */
 public class Crawler /*implements Runnable*/ {
 
 	/* S I L N I K */

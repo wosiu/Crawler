@@ -5,6 +5,11 @@ import java.util.Vector;
 
 import org.jsoup.nodes.Document;
 
+/**
+ * @author Michał Woś mw336071 <br>
+ * projekt na laboratoria Programowanie Obiektowe <br>
+ * MIM Uniwersytet Warszawski maj 2013 <br>
+ */
 public class Page {
 	
 	private final URI uri;
