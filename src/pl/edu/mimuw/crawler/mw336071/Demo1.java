@@ -22,7 +22,7 @@ public class Demo1 extends Crawler {
 	/* R O Z S Z E R Z E N I E  C R A W L E R A */
 	@Override
 	public boolean validUri( URI uri ) {
-		//return uri.getAuthority().equals( sourceURI.getAuthority() );
+		if ( uri == null || uri.getAuthority() == null ) return false;
 		return sourceURI.getAuthority().equals( uri.getAuthority() );
 	}
 	
@@ -30,7 +30,8 @@ public class Demo1 extends Crawler {
 	public void preVisit( URI url ) {
 		
 		//sprawdzamy czy URL jest spoza domeny
-		if ( !validUri( url ) && url.getAuthority() != null ) 
+		
+		if ( url.getAuthority() != null && !validUri( url ) ) 
 		{
 			String key = url.getAuthority().toString();
 			Integer amount = visitedDomains.get( key );

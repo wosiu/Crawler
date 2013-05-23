@@ -122,7 +122,7 @@ public class Crawler /*implements Runnable*/ {
 		
 		for ( URI child : uris  )
 			urisQueue.addLast( new Task(child, page) );
-			
+		
 		postVisit( page );
 		
 		if ( !rememberText )
@@ -147,12 +147,13 @@ public class Crawler /*implements Runnable*/ {
 		{
             try {
             	uriString = link.absUrl("href"); //link.attr("href")
-				ret.add( new URI( uriString ) );
+            	ret.add( new URI( uriString ) );
 			} catch (URISyntaxException e) {
 				//TO DO: sprawdzic czy domyslne Uri().toString dziala pieknie
 				log("Niepoprawny format URI na: " + page.getUri() + ":" + e.getMessage() );
 			}
 		}
+		
 		return ret;
 	}
 	
