@@ -23,178 +23,12 @@ import org.jsoup.select.Elements;
  */
 public class Crawler /*implements Runnable*/ {
 
-	/* S I L N I K */
-	
-	/**
-	 * Jednostka polecenia dla visitURL()
-	 * @author m
-	 * @param uri (URI) - adres do odwiedzenia
-	 * @param parent (Page) - ojcec
-	 */
-	private class Task {
-		URI uri;
-		Page parent;
-		
-		Task( URI uri, Page parent ) {
-			this.uri = uri;
-			this.parent = parent; 
-		}
-		
-		@Override
-		public String toString() {
-			return "["+uri.toString()+" from: " + 
-					( (parent!=null) ? parent.getUri().toString() : "null" )
-			+ "]\n";
-		}
-	}	
-	
-	private LinkedList < Task  > urisQueue = new LinkedList < Task > ();
-	private HashSet < URI > visitedUris = new HashSet < URI > ();
-
-	
-	/**
-	 * Uruchamia crawlera
-	 * @param uri (URI) - adres źródłowy
-	 */
-	final public void start( URI uri ) {
-		if ( !validUri( uri ) ) return;
-		urisQueue.addLast( new Task( uri, null ) );
-		
-		//TO DO: && (maxSitesNumber==-1 || maxSitesNumber>0 ) albo globalny booblean stop
-		while ( ! urisQueue.isEmpty() ) {
-			Task t = urisQueue.pollFirst();
-			visitUri( t.uri, t.parent );
-		}		
-	}
-	
-	/**
-	 * Uruchamia crawlera
-	 * @param uri (String) - adres źródłowy
-	 * @throws URISyntaxException
-	 */
-	final public void start( String uri ) throws URISyntaxException {
-		start( new URI( uri ) );
-	}
-
-	
-	/**
-	 * Funkcja wywoływana dla każdej ścieżki w kolejce, analizująca nowe adresy.<br> 
-	 * Odpowiednio wywołuje i obsługuje: 
-	 * preVisit(), validUri(), download(), getUris(), postVisit()
-	 * @param uri - adres stronu do przejrzenia (URI)
-	 * @param parent - rodzic (Page)
-	 * @return <b>true</b> - jesli wywolano dla nowej ścieżki oraz przetworzenie strony o tej ścieżce przebiegło pomyślnie<br>
-	 * <b>false</b> - w p.p.
-	 */
-	private boolean visitUri( URI uri, Page parent ) {
-					
-		//instrukcje uzytkownika
-		preVisit( uri );
-		
-		//sprawdzam glebokosc, jesli ustawiona
-		int h = (parent != null) ? ( parent.getFirstDeph() + 1 ) : 0;
-		if ( maxDeph != inf && h > maxDeph ) return false;
-		
-		//sprawdzamy czy ten uri juz nie wystapil - jak tak, nie przetwarzam
-		if( visitedUris.contains( uri ) ) {return false;}
-		
-		//sprawdzamy czy ten uri podoba sie uzytkownikowi
-		if( !validUri( uri ) ) {return false;}
-		
-		//zaznaczam, że odwiedzona
-		visitedUris.add( uri );
-		
-		Page page = new Page( uri );
-		page.setFirstDeph(h);
-		
-		//dodaje obecną stronę jako syna strony źródłowej - rozwojowe
-		if( parent != null ) parent.outgoingUris.add( page );
-
-		// obsluga DOWNLOADu:
-		boolean fail = true;
-		int downloadIterator = 0;
-				
-		while ( maxRetryNumber == - 1 || (downloadIterator < maxRetryNumber && fail) )
-		{
-			try {
-				fail = false;
-				download( page );
-			} catch (UnknownHostException e) {
-				fail = true;
-				try { 
-					log("Problem z połączeniem podczas pobierania: " 
-							+ page.getUri().toString() + ". Oczekiwanie na " 
-							+ (downloadIterator+1) + " próbę pobrania..");
-					
-					Thread.sleep( timeBetweenRetries );
-				} catch (InterruptedException e1) {
-					log("Proba zatrzymania zatrzymanego wczesniej wątku.");
-					//to nie powinno sie zdarzyc, chyba ze zmienie koncepcje na wielowątkową
-				}
-			} catch ( IllegalArgumentException | IOException e ) {
-				log( "Nie przetworzono strony: " + uri.toString() + ": " + e.toString() );
-				return false;
-			}
-			
-			downloadIterator++;
-		}
-		
-		if( downloadIterator == maxRetryNumber && fail ) 
-		{
-			log( "Nie pobrano strony: " + uri.toString() + ". Limit czasu przekroczony." );
-			return false;	
-		}
-		// END OF DOWNLOAD
-		
-		//pobieram wszystkie odnosniki z bierzącej strony i kolejkuję je
-		Vector<URI> uris = getUris( page );
-		
-		for ( URI child : uris  )
-			urisQueue.addLast( new Task(child, page) );
-		
-		//instrukcje uzytkownika
-		postVisit( page );
-		
-		if ( !rememberText )
-		{
-			//zwalniam pamiec z treścią strony
-			page.getDoc().empty();
-		}
-		
-		return true;
-	}
-	
-	/**
-	 * Znajduje wszystko pomiedzy znacznikami < a >. 
-	 * Nie waliduje preferencjami uzytkownika. Sprawdza poprawnosc URI.
-	 * 
-	 * @param page (Page) - strona do analizy
-	 * @return Vector < URI > - Vector wszystkich znalezionych odnosnikow na stronie
-	 */
-	private Vector<URI> getUris( Page page ) 
-	{
-		Elements anchors = page.getDoc().select("a[href]");
-        Vector<URI>ret = new Vector<URI>();
-        String uriString;
-        
-		for ( Element link : anchors )
-		{
-            try {
-            	uriString = link.absUrl("href"); //link.attr("href")
-            	ret.add( new URI( uriString ) );
-			} catch (URISyntaxException e) {
-				log("Niepoprawny format URI na: " + page.getUri() + ":" + e.getMessage() );
-			}
-		}
-		
-		return ret;
-	}
-	
-	
 	/* C O N F I G : */
-	public final int inf = -1;
-	private int maxDeph = inf;
-	private int maxSitesNumber = inf;
+	
+	//znaczenie pól - patrz komentarz przy ich seterach
+	public final int INF = -1;
+	private int maxDeph = INF;
+	private int maxSitesNumber = INF;
 	private int maxRetryNumber = 5; 
 	private int timeBetweenRetries = 1500; //w ms 
 	private boolean rememberText = false;	
@@ -250,7 +84,152 @@ public class Crawler /*implements Runnable*/ {
 	 * @return -1 (int)
 	 */
 	public int infinity() {
-		return inf;
+		return INF;
+	}
+	
+	
+	/* S I L N I K */
+	
+	private LinkedList < Task  > urisQueue = new LinkedList < Task > ();
+	private HashSet < URI > visitedUris = new HashSet < URI > ();
+
+	
+	/**
+	 * Uruchamia crawlera
+	 * @param uri (URI) - adres źródłowy
+	 */
+	final public void start( URI uri ) {
+		if ( !validUri( uri ) ) return;
+		urisQueue.addLast( new Task( uri, null ) );
+		
+		//TO DO: && (maxSitesNumber==-1 || maxSitesNumber>0 ) albo globalny booblean stop
+		while ( ! urisQueue.isEmpty() ) {
+			Task t = urisQueue.pollFirst();
+			visitUri( t.uri, t.parent );
+		}		
+	}
+	
+	/**
+	 * Uruchamia crawlera
+	 * @param uri (String) - adres źródłowy
+	 * @throws URISyntaxException
+	 */
+	final public void start( String uri ) throws URISyntaxException {
+		start( new URI( uri ) );
+	}
+
+	
+	/**
+	 * Funkcja wywoływana dla każdej ścieżki w kolejce, analizująca nowe adresy.<br> 
+	 * Odpowiednio wywołuje i obsługuje: 
+	 * preVisit(), validUri(), download(), getUris(), postVisit()
+	 * @param uri - adres stronu do przejrzenia (URI)
+	 * @param parent - rodzic (Page)
+	 * @return <b>true</b> - jesli wywolano dla nowej ścieżki oraz przetworzenie strony o tej ścieżce przebiegło pomyślnie<br>
+	 * <b>false</b> - w p.p.
+	 */
+	private boolean visitUri( URI uri, Page parent ) {
+					
+		//instrukcje uzytkownika
+		preVisit( uri );
+		
+		//sprawdzam glebokosc, jesli ustawiona
+		int h = (parent != null) ? ( parent.getFirstDeph() + 1 ) : 0;
+		if ( maxDeph != INF && h > maxDeph ) return false;
+		
+		//sprawdzamy czy ten uri juz nie wystapil - jak tak, nie przetwarzam
+		if( visitedUris.contains( uri ) ) {return false;}
+		
+		//sprawdzamy czy ten uri podoba sie uzytkownikowi
+		if( !validUri( uri ) ) {return false;}
+		
+		//zaznaczam, że odwiedzona
+		visitedUris.add( uri );
+		
+		Page page = new Page( uri );
+		page.setFirstDeph(h);
+		
+		//dodaje obecną stronę jako syna strony źródłowej - rozwojowe
+		if( parent != null ) parent.outgoingUris.add( page );
+
+		// obsluga DOWNLOADu:
+		boolean fail = true;
+		int downloadCounter = 0;
+				
+		while ( maxRetryNumber == - 1 || (downloadCounter < maxRetryNumber && fail) )
+		{
+			try {
+				fail = false;
+				download( page );
+			} catch (UnknownHostException e) {
+				fail = true;
+				try { 
+					log("Problem z połączeniem podczas pobierania: " 
+							+ page.getUri().toString() + ". Oczekiwanie na " 
+							+ (downloadCounter+1) + " próbę pobrania..");
+					
+					Thread.sleep( timeBetweenRetries );
+				} catch (InterruptedException e1) {
+					log("Proba zatrzymania zatrzymanego wczesniej wątku.");
+					//to nie powinno sie zdarzyc, chyba ze zmienie koncepcje na wielowątkową
+				}
+			} catch ( IllegalArgumentException | IOException e ) {
+				log( "Nie przetworzono strony: " + uri.toString() + ": " + e.toString() );
+				return false;
+			}
+			
+			downloadCounter++;
+		}
+		
+		if( downloadCounter == maxRetryNumber && fail ) 
+		{
+			log( "Nie pobrano strony: " + uri.toString() + ". Limit czasu przekroczony." );
+			return false;	
+		}
+		// END OF DOWNLOAD
+		
+		//pobieram wszystkie odnosniki z bierzącej strony i kolejkuję je
+		Vector<URI> uris = getUris( page );
+		
+		for ( URI child : uris  )
+			urisQueue.addLast( new Task(child, page) );
+		
+		//instrukcje uzytkownika
+		postVisit( page );
+		
+		if ( !rememberText )
+		{
+			//zwalniam pamiec z treścią strony
+			page.getDoc().empty();
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Znajduje wszystko pomiedzy znacznikami < a >. 
+	 * Nie waliduje preferencjami uzytkownika. Sprawdza poprawnosc URI.
+	 * 
+	 * @param page (Page) - strona do analizy
+	 * @return Vector < URI > - Vecto#r wszystkich znalezionych odnosnikow na stronie
+	 */
+	private Vector<URI> getUris( Page page ) 
+	{
+		Elements anchors = page.getDoc().select("a[href]");
+        Vector<URI>ret = new Vector<URI>();
+        String uriString;
+        
+		for ( Element link : anchors )
+		{
+            try {
+            	uriString = link.absUrl("href"); //link.attr("href")
+            	ret.add( new URI( uriString ) );
+			} catch (URISyntaxException e) {
+				log("Niepoprawny format URI na: " + page.getUri() + ":" + e.getMessage() );
+			}
+		}
+		
+		return ret;
 	}
 	
 	
