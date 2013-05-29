@@ -36,8 +36,8 @@ public class Page {
 		return pid;
 	}
 	/**
-	 * Ustawia id strony
-	 * @param pid
+	 * Ustawia id strony (opcjonalne, do rozszerzania funkcjonalności Crawlera)
+	 * @param pid - (int) nadane przez uzytkownika id
 	 */
 	public void setPid(int pid) {
 		this.pid = pid;
@@ -50,7 +50,7 @@ public class Page {
 	}
 	/**
 	 * Ustawia glebokosc pierwszego wystapienia
-	 * @param firstDeph
+	 * @param firstDeph - (int) glebokosc pierwszego wystąpienia
 	 */
 	public void setFirstDeph(int firstDeph) {
 		this.firstDeph = firstDeph;
@@ -64,7 +64,7 @@ public class Page {
 	}
 	/**
 	 * Ustawia pobraną zawartość w formacie <a href="http://jsoup.org/apidocs/org/jsoup/nodes/Document.html">Document</a>
-	 * @param doc
+	 * @param doc - (<a href="http://jsoup.org/apidocs/org/jsoup/nodes/Document.html">Document</a>)
 	 */
 	public void setDoc(Document doc) {
 		this.doc = doc;
