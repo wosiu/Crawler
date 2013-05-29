@@ -34,6 +34,12 @@ public class Demo2 extends Crawler {
 	}
 	
 	
+	@Override
+	public void log( String monit ) {
+		System.err.println( monit );
+	}
+	
+	
 	public static void main(String[] args) {
 
 		Demo2 mycrawler = new Demo2();		

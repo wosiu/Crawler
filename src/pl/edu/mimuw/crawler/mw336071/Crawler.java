@@ -65,7 +65,7 @@ public class Crawler  {
 		
 		//TO DO: && (maxSitesNumber==-1 || maxSitesNumber>0 ) albo globalny booblean stop
 		do{
-			deb( Thread.activeCount() );
+			//deb( Thread.activeCount() );
 			Task t = null;
 			
 			try {
@@ -77,7 +77,7 @@ public class Crawler  {
 			
 			if( t == null ) continue;
 			
-			if(  Thread.activeCount() < 128 )
+			if(  Thread.activeCount() < 4 ) //TO DO: zmienic spowrotem wieksze
 			{
 				Runnable obiekt = new myThread( t );
 				(new Thread(obiekt)).start();
@@ -89,7 +89,7 @@ public class Crawler  {
 			
 		} while ( Thread.activeCount() > 1 || ! urisQueue.isEmpty() ); 
 		
-		deb( "Thread.activeCount(): " + Thread.activeCount()  );
+		//deb( "Thread.activeCount(): " + Thread.activeCount()  );
 	}
 	
 	/**
@@ -373,10 +373,10 @@ public class Crawler  {
 	
 	@SuppressWarnings("unused")
 	private void deb( String monit ) {
-		log( monit );
+		System.out.println( monit );
 	}
-	@SuppressWarnings("unused")
+	//@SuppressWarnings("unused")
 	private void deb( int number ) {
-		log( ""+number );
+		System.out.println( ""+number );
 	}
 }

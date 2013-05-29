@@ -1,5 +1,8 @@
 package pl.edu.mimuw.crawler.mw336071;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -55,11 +58,31 @@ public class Demo1 extends Crawler {
 	}
 	private PairComparator entryCmp = new PairComparator();
 	
+	public FileOutputStream fos = null;
+	
+	@Override
+	public void log( String monit ) {
+		   for(int i = 0; i < monit.length(); i++){
+			     try {
+					fos.write((int)monit.charAt(i));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} //Zapis bajt po bajcie każdego znaku...
+			   }
+	}
+	
 
 	/* M A I N  */
 	public static void main(String[] args) {
 
 		Demo1 mycrawler = new Demo1(); 
+		
+		try {
+			mycrawler.fos = new FileOutputStream("mojerror.log");
+		} catch (FileNotFoundException e1) {
+			System.out.println("Nie udalo sie stworzyc pliku z logiem");
+		}
 		
 		try {
 			/* inicjacja */
