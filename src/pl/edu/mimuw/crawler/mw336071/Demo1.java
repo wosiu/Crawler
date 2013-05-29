@@ -5,10 +5,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Michał Woś mw336071 <br>
@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 public class Demo1 extends Crawler {
 	
 	//znalezione strony zewnetrzne i ilosc wystapien (key - url, value - liniczk):
-	private HashMap <String, Integer> visitedDomains = new HashMap <String, Integer >();
+	private ConcurrentHashMap <String, Integer> visitedDomains = new ConcurrentHashMap <String, Integer >();
 	private URI sourceURI;
 	
 	/* R O Z S Z E R Z E N I E  C R A W L E R A */
@@ -29,7 +29,7 @@ public class Demo1 extends Crawler {
 	}
 	
 	@Override
-	public void preVisit( URI url ) {
+	synchronized public void preVisit( URI url ) {
 		//sprawdzamy czy URL jest spoza domeny
 		if ( url.getAuthority() != null && !validUri( url ) ) 
 		{
@@ -80,7 +80,7 @@ public class Demo1 extends Crawler {
 			
 			/*wypisanie*/
 			Iterator< Entry<String,Integer> > iterator = sorted.iterator();
-
+			
 			while (iterator.hasNext()) {
 				Entry<String,Integer> pozycja = iterator.next();
 				System.out.println( pozycja.getKey() + " " + pozycja.getValue() );

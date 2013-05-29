@@ -4,9 +4,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -21,36 +25,29 @@ import org.jsoup.select.Elements;
  * budowanym od zadanego adresu. Jego szczególne przypadki rozszerzeń znajdują sie 
  * w klasach dziedziczących: Demo1, Demo2
  */
-public class Crawler /*implements Runnable*/ {
+public class Crawler  {
 
-	/* S I L N I K */
 	
-	/**
-	 * Jednostka polecenia dla visitURL()
-	 * @author m
-	 * @param uri (URI) - adres do odwiedzenia
-	 * @param parent (Page) - ojcec
-	 */
-	private class Task {
-		URI uri;
-		Page parent;
+	/* W Ą T K I */
+	class myThread implements Runnable {
+		Task task;
 		
-		Task( URI uri, Page parent ) {
-			this.uri = uri;
-			this.parent = parent; 
+		public myThread ( Task task ) {
+			this.task = task;
 		}
-		
-		@Override
-		public String toString() {
-			return "["+uri.toString()+" from: " + 
-					( (parent!=null) ? parent.getUri().toString() : "null" )
-			+ "]\n";
-		}
-	}	
-	
-	private LinkedList < Task  > urisQueue = new LinkedList < Task > ();
-	private HashSet < URI > visitedUris = new HashSet < URI > ();
 
+		public void run() {
+			if( task == null ) { log("Wątek: puste polecenie."); return; }
+			
+			visitUri( task.uri, task.parent );
+		}
+	} 
+	
+	/* S I L N I K */	
+	//private LinkedList < Task  > urisQueue = new LinkedList < Task > ();
+	private BlockingQueue < Task  > urisQueue = new LinkedBlockingQueue < Task > ();
+	//private HashSet < URI > visitedUris = new HashSet < URI > ();
+	private Set < URI > visitedUris = Collections.synchronizedSet(new HashSet< URI > ());
 	
 	/**
 	 * Uruchamia crawlera
@@ -58,13 +55,41 @@ public class Crawler /*implements Runnable*/ {
 	 */
 	final public void start( URI uri ) {
 		if ( !validUri( uri ) ) return;
-		urisQueue.addLast( new Task( uri, null ) );
+		
+		try {
+			urisQueue.put( new Task( uri, null ) );
+		} catch (InterruptedException e1) {
+			log( "start(): Ponowne uruchomienie. ");
+			start( uri );
+		}
 		
 		//TO DO: && (maxSitesNumber==-1 || maxSitesNumber>0 ) albo globalny booblean stop
-		while ( ! urisQueue.isEmpty() ) {
-			Task t = urisQueue.pollFirst();
-			visitUri( t.uri, t.parent );
-		}		
+		do{
+			deb( Thread.activeCount() );
+			Task t = null;
+			
+			try {
+				t = urisQueue.poll(1500, TimeUnit.MILLISECONDS);
+			} catch (InterruptedException e) { 
+				//to sie nie powinno zdarzyc
+				log("start(): while: Blad podczas przetwarzania."); 
+			}
+			
+			if( t == null ) continue;
+			
+			if(  Thread.activeCount() < 128 )
+			{
+				Runnable obiekt = new myThread( t );
+				(new Thread(obiekt)).start();
+			}
+			else
+			{
+				visitUri( t.uri, t.parent );
+			}
+			
+		} while ( Thread.activeCount() > 1 || ! urisQueue.isEmpty() ); 
+		
+		deb( "Thread.activeCount(): " + Thread.activeCount()  );
 	}
 	
 	/**
@@ -77,6 +102,14 @@ public class Crawler /*implements Runnable*/ {
 	}
 
 	
+	synchronized private boolean isVisited( URI uri ) {
+		//sprawdzamy czy ten uri juz nie wystapil - jak tak, nie przetwarzam
+		if ( visitedUris.contains( uri ) ) {return true;}
+		
+		visitedUris.add( uri );
+		return false;
+	}
+	
 	/**
 	 * Funkcja wywoływana dla każdej ścieżki w kolejce, analizująca nowe adresy.<br> 
 	 * Odpowiednio wywołuje i obsługuje: 
@@ -86,23 +119,31 @@ public class Crawler /*implements Runnable*/ {
 	 * @return <b>true</b> - jesli wywolano dla nowej ścieżki oraz przetworzenie strony o tej ścieżce przebiegło pomyślnie<br>
 	 * <b>false</b> - w p.p.
 	 */
-	private boolean visitUri( URI uri, Page parent ) {
-					
+	
+	//TODO: parent.outgoings - concurrent
+	
+	/*synchronized*/ private boolean visitUri( URI uri, Page parent ) {
+		
 		//instrukcje uzytkownika
 		preVisit( uri );
 		
+		if ( isVisited(uri) ) return false;
+		
 		//sprawdzam glebokosc, jesli ustawiona
 		int h = (parent != null) ? ( parent.getFirstDeph() + 1 ) : 0;
+		
 		if ( maxDeph != inf && h > maxDeph ) return false;
 		
 		//sprawdzamy czy ten uri juz nie wystapil - jak tak, nie przetwarzam
-		if( visitedUris.contains( uri ) ) {return false;}
+		//if ( visitedUris.contains( uri ) ) {return false;}
+		//to
 		
 		//sprawdzamy czy ten uri podoba sie uzytkownikowi
 		if( !validUri( uri ) ) {return false;}
 		
 		//zaznaczam, że odwiedzona
-		visitedUris.add( uri );
+		//visitedUris.add( uri );
+		//i to dac razem do zewnetrznej synchronized i wywolywac po previsit
 		
 		Page page = new Page( uri );
 		page.setFirstDeph(h);
@@ -149,9 +190,14 @@ public class Crawler /*implements Runnable*/ {
 		//pobieram wszystkie odnosniki z bierzącej strony i kolejkuję je
 		Vector<URI> uris = getUris( page );
 		
-		for ( URI child : uris  )
-			urisQueue.addLast( new Task(child, page) );
-		
+		for ( int i = 0; i < uris.size(); i++ )
+			try {
+				urisQueue.put( new Task( uris.get(i), page) );
+			} catch (InterruptedException e) {
+				log("visitUrl(): uris do urisQueue: powtorzenie wlozenia.");
+				i--;
+			}
+			
 		//instrukcje uzytkownika
 		postVisit( page );
 		
@@ -160,8 +206,9 @@ public class Crawler /*implements Runnable*/ {
 			//zwalniam pamiec z treścią strony
 			page.getDoc().empty();
 		}
-		
+
 		return true;
+
 	}
 	
 	/**
@@ -297,7 +344,7 @@ public class Crawler /*implements Runnable*/ {
 	 * Crawlera.
 	 * @param uri - adres strony (URI)
 	 */
-	public void preVisit( URI uri ) {
+	synchronized public void preVisit( URI uri ) {
 	}
 
 	/**
@@ -311,7 +358,7 @@ public class Crawler /*implements Runnable*/ {
 	 * zapisać do pliku, bądź przetworzyć w dowolny sposób.</i>
 	 * @param page - przetworzona strona (Page)
 	 */
-	public void postVisit( Page page ) {		
+	synchronized public void postVisit( Page page ) {		
 	} 
 	
 	/**

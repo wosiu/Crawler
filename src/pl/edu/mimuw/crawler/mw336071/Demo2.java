@@ -16,7 +16,7 @@ public class Demo2 extends Crawler {
 	private int counter = 0;
 	
 	@Override
-	public void postVisit( Page page ) {
+	synchronized public void postVisit( Page page ) {
 		counter++;
 	}
 	
