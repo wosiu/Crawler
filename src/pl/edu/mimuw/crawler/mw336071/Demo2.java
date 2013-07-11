@@ -57,6 +57,6 @@ public class Demo2 extends Crawler {
 		mycrawler.setMaxDeph( maxh );		
 		mycrawler.start( source.toURI() );
 		
-		System.out.println( Math.max(0, mycrawler.counter) );
+		System.out.println( mycrawler.counter );
 	}
 }

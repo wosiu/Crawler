@@ -21,7 +21,7 @@ import org.jsoup.select.Elements;
  * budowanym od zadanego adresu. Jego szczególne przypadki rozszerzeń znajdują sie 
  * w klasach dziedziczących: Demo1, Demo2
  */
-public class Crawler /*implements Runnable*/ {
+public class Crawler {
 
 	/* C O N F I G : */
 	
@@ -41,7 +41,7 @@ public class Crawler /*implements Runnable*/ {
 		maxDeph = h;
 	}
 	/**
-	 * Ustawia parametr rozwojowu - dopuszczalną maksymalną ilość stron do przetworzenia.
+	 * Ustawia parametr rozwojowy - dopuszczalną maksymalną ilość stron do przetworzenia.
 	 * Nie wpływa na działanie programu, dopóki nie zostanie użyty w implementacji
 	 * preVisit(..) lub postVisit(..) przez użytkownika.
 	 * @param n - maksymalna ilość stron do przetworzenia (int) 
@@ -102,7 +102,6 @@ public class Crawler /*implements Runnable*/ {
 		if ( !validUri( uri ) ) return;
 		urisQueue.addLast( new Task( uri, null ) );
 		
-		//TO DO: && (maxSitesNumber==-1 || maxSitesNumber>0 ) albo globalny booblean stop
 		while ( ! urisQueue.isEmpty() ) {
 			Task t = urisQueue.pollFirst();
 			visitUri( t.uri, t.parent );
