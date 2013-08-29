@@ -212,7 +212,7 @@ public class Crawler {
 	 * @param page (Page) - strona do analizy
 	 * @return Vector < URI > - Vecto#r wszystkich znalezionych odnosnikow na stronie
 	 */
-	private Vector<URI> getUris( Page page ) 
+	public Vector<URI> getUris( Page page ) 
 	{
 		Elements anchors = page.getDoc().select("a[href]");
         Vector<URI>ret = new Vector<URI>();
