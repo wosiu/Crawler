@@ -203,11 +203,13 @@ public class DisambiguationStatBuilder extends Crawler {
 		String startURL = "http://hadoop-master.vls.icm.edu.pl:50030/jobtasks.jsp?jobid=job_201308201233_0570&type=map&pagenum=1&state=completed";
 		String logPath = "logs/apr.stat";
 
-		if (args.length > 0) {
+		if (args.length == 0) {
+			throw Exception("Nie podano URLa startowego.");
+		}
+		if (args.length >= 1) {
 			startURL = args[0];
 		}
-
-		if (args.length > 1) {
+		if (args.length >= 2) {
 			logPath = args[1];
 		}
 
