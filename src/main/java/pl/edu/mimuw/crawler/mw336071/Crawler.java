@@ -97,8 +97,9 @@ public class Crawler {
 	/**
 	 * Uruchamia crawlera
 	 * @param uri (URI) - adres źródłowy
+	 * @throws IOException 
 	 */
-	final public void start( URI uri ) {
+	final public void start( URI uri ) throws IOException {
 		if ( !validUri( uri ) ) return;
 		urisQueue.addLast( new Task( uri, null ) );
 		
@@ -112,8 +113,9 @@ public class Crawler {
 	 * Uruchamia crawlera
 	 * @param uri (String) - adres źródłowy
 	 * @throws URISyntaxException
+	 * @throws IOException 
 	 */
-	final public void start( String uri ) throws URISyntaxException {
+	final public void start( String uri ) throws URISyntaxException, IOException {
 		start( new URI( uri ) );
 	}
 
@@ -126,8 +128,9 @@ public class Crawler {
 	 * @param parent - rodzic (Page)
 	 * @return <b>true</b> - jesli wywolano dla nowej ścieżki oraz przetworzenie strony o tej ścieżce przebiegło pomyślnie<br>
 	 * <b>false</b> - w p.p.
+	 * @throws IOException 
 	 */
-	private boolean visitUri( URI uri, Page parent ) {
+	private boolean visitUri( URI uri, Page parent ) throws IOException {
 					
 		//instrukcje uzytkownika
 		preVisit( uri );
@@ -172,10 +175,13 @@ public class Crawler {
 					log("Proba zatrzymania zatrzymanego wczesniej wątku.");
 					//to nie powinno sie zdarzyc, chyba ze zmienie koncepcje na wielowątkową
 				}
-			} catch ( IllegalArgumentException | IOException e ) {
+			} catch ( IllegalArgumentException e ) { 
 				log( "Nie przetworzono strony: " + uri.toString() + ": " + e.toString() );
 				return false;
-			}
+			} catch ( IOException e ) {
+				log( "Nie przetworzono strony: " + uri.toString() + ": " + e.toString() );
+				return false;
+			} 
 			
 			downloadCounter++;
 		}

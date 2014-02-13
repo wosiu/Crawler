@@ -14,14 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -39,11 +32,10 @@ import org.jsoup.select.Elements;
 public class DisambiguationStatBuilder extends Crawler {
 
 	private URI sourceURI;
-	private List<String> logs = new ArrayList<String>();
+	//private List<String> logs = new ArrayList<String>();
 
 	// writing to file staff
 	private PrintWriter statistics = null;
-	private String splitKey = "#STAT#\t";
 	private String logPath = null;
 
 	// proxy for icm after open the tunnel
@@ -80,12 +72,14 @@ public class DisambiguationStatBuilder extends Crawler {
 
 		String uriString = uri.toString();
 
+		// main page of job
+		if (uriString.contains("jobdetails.jsp"))
+			return true;
 		// links to list of task
-		if (uriString.contains("jobtasks.jsp?jobid=job_")
-				&& uriString.contains("state=completed"))
+		if (uriString.contains("jobtasks.jsp"))
 			return true;
 		// links table with attemps of task
-		if (uriString.contains("taskdetails.jsp?tipid=task_"))
+		if (uriString.contains("taskdetails.jsp"))
 			return true;
 		// links to proper logs
 		if (uriString.contains("tasklog?attemptid=attempt_")
@@ -105,20 +99,20 @@ public class DisambiguationStatBuilder extends Crawler {
 
 		Document doc = page.getDoc();
 		Elements preBlock = doc.select("pre");
+		String task = doc.select("h1").get(0).html();
+		
+		write("\n=========== " + task + " ===========");
 
-		int lineCounter = 0;
-
-		String block = preBlock.get(0).html();
-		String[] lines = block.split(splitKey);
-		for (String line : lines) {
-			if (line.startsWith("#NOTSTAT#"))
-				continue;
-
-			write(line);
-			lineCounter++;
+		int lines_number = 0;
+		String block_name[] = {"stdout logs", "stderr logs", "syslog logs"};
+		for ( int i = 0; i < 3; i++ ) {
+			write("\n--------------------------- " + block_name[i] + " ---------------------------------");
+			String block = preBlock.get(i).html();
+			lines_number += block.split("\r\n|\r|\n").length;
+			write(block);
 		}
-
-		System.out.println("Stored " + lineCounter + " lines from task "
+		
+		System.out.println("Stored " + lines_number + " lines from task "
 				+ (taskCounter++) + " in file: " + logPath);
 	}
 
@@ -188,7 +182,7 @@ public class DisambiguationStatBuilder extends Crawler {
 				uc.getInputStream()));
 
 		while ((line = in.readLine()) != null) {
-			tmp.append(line);
+			tmp.append(line + "\n");
 		}
 
 		Document doc = Jsoup.parse(String.valueOf(tmp));
@@ -204,7 +198,7 @@ public class DisambiguationStatBuilder extends Crawler {
 		String logPath = "logs/apr.stat";
 
 		if (args.length == 0) {
-			throw Exception("Nie podano URLa startowego.");
+			throw new Exception("Nie podano URLa startowego.");
 		}
 		if (args.length >= 1) {
 			startURL = args[0];
