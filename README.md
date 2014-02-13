@@ -18,6 +18,7 @@ ssh -D 23456 your_login@hadoop.vls.icm.edu.pl
 ./run.sh 'link from which you want to start crawlering, eg. main page of specific job' [local_path_for_new_merged_logs]
 
 eg:
-java -jar statimporter.jar 'http://hadoop-master.vls.icm.edu.pl:50030/jobdetails.jsp?jobid=job_201308201233_2253&refresh=30' stats/statistics.log
+./run.sh 'http://hadoop-master.vls.icm.edu.pl:50030/jobtasks.jsp?jobid=job_201401301427_2519&type=map&pagenum=1&state=completed' statistics.log
 
+Path for logs is optional - there is default one configured.
 Note that you need Maven Plugin installed.
