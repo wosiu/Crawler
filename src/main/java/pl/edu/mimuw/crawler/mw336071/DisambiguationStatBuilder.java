@@ -67,10 +67,10 @@ public class DisambiguationStatBuilder extends Crawler {
 			return false;
 
 		if (uri.getAuthority() != null
-				&& !uri.getAuthority().contains("hadoop-master")
-				&& !uri.getAuthority().contains("50030"))
+				&& !uri.getAuthority().contains("hadoop-")
+				&& !uri.getAuthority().contains(":50030"))
 			return false;
-
+		
 		String uriString = uri.toString();
 
 		// main page of job
@@ -197,7 +197,7 @@ public class DisambiguationStatBuilder extends Crawler {
 	public static void main(String[] args) throws Exception {
 
 		String startURL = "http://hadoop-master.vls.icm.edu.pl:50030/jobtasks.jsp?jobid=job_201308201233_0570&type=map&pagenum=1&state=completed";
-		String logPath = "logs/apr.stat";
+		String logPath = "statimporter.log";
 
 		if (args.length == 0) {
 			throw new Exception("Nie podano URLa startowego.");
@@ -211,12 +211,13 @@ public class DisambiguationStatBuilder extends Crawler {
 
 		DisambiguationStatBuilder mycrawler = new DisambiguationStatBuilder(
 				logPath);
-
+		mycrawler.setMaxRetryNumber(5);
+		mycrawler.setTimeBetweenRetries(3000);
+		
 		try {
 			/* inicjacja */
 			mycrawler.sourceURI = new URI(startURL);
 			// mycrawler.setMaxDeph( 2 );
-
 			mycrawler.start(mycrawler.sourceURI);
 
 		} catch (URISyntaxException e) {
