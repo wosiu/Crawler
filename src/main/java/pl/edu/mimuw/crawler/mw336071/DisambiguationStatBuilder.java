@@ -27,12 +27,12 @@ import org.jsoup.select.Elements;
  *         logs at http://hadoop-master.vls.icm.edu.pl:50030/. <br>
  *         Basic crawler was made as lab project on Objective Programming.<br>
  *         MIM University of Warsaw, May 2013 <br>
- * @param 
+ * @param
  */
 public class DisambiguationStatBuilder extends Crawler {
 
 	private URI sourceURI;
-	//private List<String> logs = new ArrayList<String>();
+	// private List<String> logs = new ArrayList<String>();
 
 	// writing to file staff
 	private PrintWriter statistics = null;
@@ -67,7 +67,8 @@ public class DisambiguationStatBuilder extends Crawler {
 			return false;
 
 		if (uri.getAuthority() != null
-				&& !uri.getAuthority().contains("vls.icm.edu.pl"))
+				&& !uri.getAuthority().contains("hadoop-master")
+				&& !uri.getAuthority().contains("50030"))
 			return false;
 
 		String uriString = uri.toString();
@@ -100,18 +101,19 @@ public class DisambiguationStatBuilder extends Crawler {
 		Document doc = page.getDoc();
 		Elements preBlock = doc.select("pre");
 		String task = doc.select("h1").get(0).html();
-		
+
 		write("\n=========== " + task + " ===========");
 
 		int lines_number = 0;
-		String block_name[] = {"stdout logs", "stderr logs", "syslog logs"};
-		for ( int i = 0; i < 3; i++ ) {
-			write("\n--------------------------- " + block_name[i] + " ---------------------------------");
+		String block_name[] = { "stdout logs", "stderr logs", "syslog logs" };
+		for (int i = 0; i < 3; i++) {
+			write("\n--------------------------- " + block_name[i]
+					+ " ---------------------------------");
 			String block = preBlock.get(i).html();
 			lines_number += block.split("\r\n|\r|\n").length;
 			write(block);
 		}
-		
+
 		System.out.println("Stored " + lines_number + " lines from task "
 				+ (taskCounter++) + " in file: " + logPath);
 	}
@@ -224,3 +226,4 @@ public class DisambiguationStatBuilder extends Crawler {
 		}
 	}
 }
+
