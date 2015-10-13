@@ -134,7 +134,6 @@ public class Crawler {
 		
 		//sprawdzam glebokosc, jesli ustawiona
 		int h = (parent != null) ? ( parent.getFirstDeph() + 1 ) : 0;
-		if ( maxDeph != INF && h > maxDeph ) return false;
 		
 		//sprawdzamy czy ten uri juz nie wystapil - jak tak, nie przetwarzam
 		if( visitedUris.contains( uri ) ) {return false;}
@@ -186,16 +185,18 @@ public class Crawler {
 			return false;	
 		}
 		// END OF DOWNLOAD
-		
-		//pobieram wszystkie odnosniki z bierzącej strony i kolejkuję je
-		Vector<URI> uris = getUris( page );
-		
-		for ( URI child : uris  )
-			urisQueue.addLast( new Task(child, page) );
-		
+
+		if ( maxDeph == INF || h < maxDeph ) {
+			//pobieram wszystkie odnosniki z bierzącej strony i kolejkuję je
+			Vector<URI> uris = getUris(page);
+
+			for (URI child : uris)
+				urisQueue.addLast(new Task(child, page));
+		}
+
 		//instrukcje uzytkownika
 		postVisit( page );
-		
+
 		if ( !rememberText )
 		{
 			//zwalniam pamiec z treścią strony
@@ -289,7 +290,7 @@ public class Crawler {
 	 * zapisać do pliku, bądź przetworzyć w dowolny sposób.</i>
 	 * @param page - przetworzona strona (Page)
 	 */
-	public void postVisit( Page page ) {		
+	public void postVisit( Page page ) {
 	} 
 	
 	/**
